@@ -1,0 +1,38 @@
+html, body{
+    background-color: #222822;
+    height:100%;
+    margin:0;
+    padding:0;
+}
+
+text, tspan, a{
+    font-family: "Lucida Console";
+}
+
+ul{
+    background-color: #222831;
+}
+
+#gameStatusChangeCard{
+    background-color: #E8E8E8;
+    width: 60%;
+    min-width: 500px;
+    margin-top: 10%;
+}
+
+footer{
+    color: #E8E8E8;
+    position: absolute;
+    bottom: 0;
+}
+
+.info_container{
+    width:60%;
+    min-width: 400px;
+    margin-top: 5em;
+    margin-left:auto;
+    margin-right:auto;
+}
+.info_container a{
+    color: #E8E8E8 !important;
+}

@@ -1,0 +1,10 @@
+{
+    "PassiveFlag":{
+        "Flag": "HackBy", 
+        "Reward": 10,
+        "Punish": 5,
+        "Query":[
+            "flag"
+        ]
+    }
+}

@@ -1,0 +1,6 @@
+*.swp
+*.swa
+*.lock
+node_modules
+ScoreBoard/configs/game.json
+ScoreBoard/configs/team_configs.json
