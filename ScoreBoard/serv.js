@@ -1,6 +1,7 @@
 const fs = require("fs");
 
 // Hash
+var crypto = require("crypto");
 //const crypto = require('crypto');
 //const hash = crypto.createHash('sha256');
 
@@ -59,70 +60,46 @@ console.log(team_configs)
 // preparing, started, ended
 var gameStatus = "preparing";
 
-PassiveFlagHandler = new SC.PassiveFlagDescriptor(team_configs, game_rules, false)
+PassiveFlagHandler = new SC.PassiveFlagDescriptor(team_configs, game_rules, false);
+KingOfHillHandler = new SC.KingOfHillDescriptor(team_configs, game_rules);
+
 app.disable('etag');
 app.use(express.static(__dirname + '/public'));
 
-/* 
- * Handling request from flag listener
+/* Handling request from flag listener
  */
 app.get("/flag", (req, res)=>{
-    if (gameStatus === "started")
-        PassiveFlagHandler.calc_score(req, scores)
-    res.send('ok');
-    /*const flag = req.query.flag;
-    const time = req.query.time;
-    const ip = req.query.ip;
-    const attackedTeam = ip_table[ip];
-
-    // TODO: Allow attack from any ip address?
-    if (typeof attackedTeam !== "undefined" && 
-        typeof flag !== "undefined"         &&
-        typeof rules_table[flag] !== "undefined"){
-
-        // Lookup rule table
-        const reqTeam = rules_table[flag].team;
-        const points = rules_table[flag].points;
-
-        // Check the attacked server is not from the same team
-        if (reqTeam == attackedTeam){
-            res.send('Attacked from same team');
-            return
+    if (gameStatus === "started"){
+        switch (req.query.type){
+            case "PassiveFlag":
+                scores = PassiveFlagHandler.calc_score(req, scores, msg=>res.send(msg))
+                break;
+            case "KingOfHill":
+                scores = KingOfHillHandler.calc_score(req, scores, (msg)=>{
+                    res.send(msg);
+                })
+                break;
         }
-        
-        // Calculate scores
-        scores[reqTeam]["Flag"] += points;
-        scores[attackedTeam]["Flag"] -= points;
-
-        // TODO: log points history
-        res.send('ok');
     }
-    else
-        res.send('IP not authorized or Flag format error');
-        */
     console.log(scores)
 })
 
-/* 
- * Acquiring score data and game status
+/* Handling request for score data and game status
  */
 app.get("/score", (req, res)=>{
-    console.log(scores)
     res.json({
         "status": gameStatus,
         "scores": scores
     });
 })
 
-/*
- * Handling the request for team configuration
+/* Handling the request for team configuration
  */
 app.get("/configuration", (req, res)=>{
     res.json(team_configs);
 })
 
-/*
- * Handling the request for game status setting
+/* Handling the request for game status setting
  * Status: 
  *      Preparing, Started, ended
  */
