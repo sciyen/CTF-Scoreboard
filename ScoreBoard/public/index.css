@@ -5,6 +5,11 @@ html, body{
     padding:0;
 }
 
+.extend-height{
+    height: 100%;
+    margin: 0;
+}
+
 text, tspan, a{
     font-family: "Lucida Console";
 }
@@ -35,4 +40,50 @@ footer{
 }
 .info_container a{
     color: #E8E8E8 !important;
+}
+
+th, tr{
+    color: #E8E8E8;
+}
+
+footer{
+    width: 100%;
+}
+
+.footer p{
+    text-align: center;
+}
+
+.card{
+    margin-top: 20px;
+}
+
+.card-body{
+    background-color: #443366;
+}
+h5{
+    color: #E8E8E8;
+}
+.card-body h5{
+    color: #5588AA;
+}
+
+.table td{
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.container{
+    max-width: 1920px !important;
+}
+
+.hide{
+    display:none;
+}
+
+.cover{
+    position: absolute;
+    left: 0;
+    top: 2rem;
+    z-index: 2;
 }

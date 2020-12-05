@@ -1,13 +1,24 @@
-var svg = d3.select("#ScoreContainer")
+var svg = d3.select("#RealTimeSvgContainer")
     .append("svg:svg").style("pointer-events", "all")
-    .attr("width", window.innerWidth)
-    .attr("height", window.innerHeight);
+    .attr('class', "extend-height")
+    .attr("width", "100%")
+    //.attr("width", window.innerWidth)
+    //.attr("height", window.innerHeight);
+
+var waiting_svg = d3.select('#ScoreContainer')
+    .append("svg:svg").style("pointer-events", "all")
+    .attr('id', 'waiting-svg')
+    .attr('class', "extend-height hide cover")
+    .attr("width", "100%")
 
 /* Draw background */
 svg.append("rect")
     .attr("width", "100%")
     .attr("height", "100%")
     .attr("fill", "#222831");
+
+var scoreTableDiv = d3.select('#RealTimeScoreContainer')
+    .append('div').attr('id', 'tableContainer')
 
 var colors = d3.scale.category20b();
 var gameStatus = null;
@@ -44,6 +55,15 @@ $(document).ready(()=>{
 var waitGameAnimate = null;
 var packLayout = null;
 
+function getDivWidth(div){
+    var width = d3.select(div).style('width').slice(0, -2)
+    return Math.round(Number(width))
+}
+function getDivHeight(div){
+    var height = d3.select(div).style('height').slice(0, -2)
+    return Math.round(Number(height))
+}
+
 function getScoreInfo(){
     $.get("/score", (data)=>{
         if (gameStatus !== data['status'] && data['status'] === "preparing"){
@@ -59,42 +79,33 @@ function getScoreInfo(){
                 // Clear wait game animation
                 animation_waiting.exit();
                 packLayout = d3.pack()
-                    .size([winWidth, winHeight])
+                    .size([winWidth * 0.8, 
+                           getDivHeight('body')-getDivHeight('#navTab')])
                     .padding(d=>{return d.data.name=="parent"?100:10})
+                animation_team_config.entry(teamConfig)
             }
-            console.log(data['scores'])
+            //console.log(data['scores'])
             // Updating data
             teamConfig.children.forEach((team, idx)=>{
                 teamConfig.children[idx].score = data['scores'][team.name]['PassiveFlag'];
             })
-            console.log(teamConfig)
             // Show competition
-            var rootNode = d3.hierarchy(teamConfig)
-            console.log(rootNode)
-            rootNode.sum(d=>{return d.rad?d.rad:1})
-            console.log("update")
-
-            packLayout(rootNode);
-            var g = svg.selectAll("g")
-                .data(rootNode.descendants())
-            nodes = g.enter()
-                .append('g')
-                .attr('transform', d=>{return `translate(${[d.x, d.y]})`})
-            nodes.append('circle')
-                .attr('r', (d)=>{return d.r;})
-                .style('fill', (d)=>d.children?"#558899":"#443322")
-                .attr('fill-opacity', d=>d.data.name=="parent"?0:0.25)
-            nodes.append('text')
-                .text(d=>{return d.data.name=="parent"?"":(d.data.score?d.data.name+': '+d.data.score:d.data.name)})
-                .style("text-anchor", "middle")
-                //.attr('x', d=>{return d.x})
-                //.attr('y', d=>{return d.y})
-                .attr('font-size', d=>{return d.children?"2.5em":"0.7em"})
-                .attr('fill', d=>{return d.children?"#E8E8E8":"#F05454"})
-                .attr('dy', d=>{return d.children?-50:0})
-            g.exit().remove()
-
-            console.log(data['scores'])
+            team_scores = []
+            for( var team in data['scores'] ){
+                scores = []
+                for( var rule in data['scores'][team] ){
+                    scores.push({
+                        "Name": rule,
+                        "Value": data['scores'][team][rule]
+                    })
+                }
+                team_scores.push({
+                    "TeamName": team, 
+                    "Scores": scores
+                })
+            }
+            console.log(team_scores);
+            animation_score_table.update(scoreTableDiv, team_scores)
         }
     })
 }

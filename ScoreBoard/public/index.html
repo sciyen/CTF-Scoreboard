@@ -31,7 +31,7 @@
             </li>
         </ul>
 
-        <div class="tab-content" id="scoreboardTabContent">
+        <div class="tab-content extend-height" id="scoreboardTabContent">
             <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
                 <span class="card mx-auto py-2 px-5" id="gameStatusChangeCard">
                     <h5 class="card-title mx-auto my-4">Game Status Control</h5>
@@ -69,8 +69,14 @@
             </div>
 
             <!-- Main score board -->
-            <div class="tab-pane fade" id="score" role="tabpanel" aria-labelledby="score-tab">
-                <div id="ScoreContainer">
+            <div class="tab-pane fade extend-height" id="score" role="tabpanel" aria-labelledby="score-tab">
+                <div id="ScoreContainer" class="container extend-height">
+                    <div class="row extend-height">
+                        <div id="RealTimeScoreContainer" class="col-sm-3">
+                        </div>
+                        <div id="RealTimeSvgContainer" class="col-sm-9 extend-height">
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -89,7 +95,7 @@
 
 
         <footer>
-            <div>
+            <div class="footer">
                 <p> © 2020 Yencheng </p>
             </div>
         </footer>
