@@ -5,7 +5,10 @@
   "author": "Yencheng Chu",
   "license": "MIT",
   "dependencies": {
+    "d3-ease": "^2.0.0",
+    "d3-scale": "^3.2.3",
     "express": "^4.17.1",
-    "fs": "^0.0.1-security"
+    "fs": "^0.0.1-security",
+    "socket.io": "^3.0.3"
   }
 }
