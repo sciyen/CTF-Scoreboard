@@ -67,6 +67,17 @@ class RuleDescriptor{
         }
         return true;
     }
+
+    /* Pack up attacking information so as to visualizing
+     * the procedure of attacking 
+     */
+    pack_attacking_info(requesting_team, attacked_team){
+        return {
+            "label": this.label,
+            "requesting": requesting_team,
+            "attacked": attacked_team
+        }
+    }
 }
 
 /***************************************************************
@@ -109,12 +120,13 @@ class PassiveFlagDescriptor extends RuleDescriptor{
     calc_score(req, scores, callback){
         const flag = req.query[this.rule.Query[0]];
         const ip = req.query.ip;
+        var attack_info = null;
         var msg = "";
         if(!this.check_valid_input(req, flag)){
             // Valid input
             console.log("Invalid req for passive flag:");
             console.log(req.query)
-            msg = "Invalid req for passive flag";
+            msg = "InvalidRequest";
         }
         else{
             const req_team = this.hash_table[flag];
@@ -122,9 +134,9 @@ class PassiveFlagDescriptor extends RuleDescriptor{
             scores[req_team][this.label] += this.rule.Reward;
             scores[att_team][this.label] -= this.rule.Punish;
             msg = "ok";
+            attack_info = super.pack_attacking_info(req_team, att_team);
         }
-        callback(msg);
-        return scores;
+        callback(msg, scores, attack_info);
     }
 
 }
@@ -184,12 +196,13 @@ class KingOfHillDescriptor extends RuleDescriptor{
     calc_score(req, scores, callback){
         const flag = req.query[this.rule.Query[0]];
         const ip = req.query.ip;
+        var attack_info = null;
         var msg = "";
         if(!this.check_valid_input(req, flag)){
             // Valid input
-            console.log("Invalid req for passive flag");
+            console.log("Invalid req for King of Hill, do you forget to add castle ip?");
             console.log(req.query)
-            msg = "Invalid req for passive flag"
+            msg = "InvalidRequest"
         }
         else{
             const req_team = this.hash_table[flag];
@@ -221,11 +234,11 @@ class KingOfHillDescriptor extends RuleDescriptor{
             }
             else{
                 console.log("key error");
-                msg = "key error"
+                msg = "keyError"
             }
+            attack_info = super.pack_attacking_info(req.query.team, att_team);
         }
-        callback(msg);
-        return scores;
+        callback(msg, scores, attack_info);
     }
 }
 

@@ -1,4 +1,5 @@
 const fs = require("fs");
+const http = require('http');
 
 // Hash
 var crypto = require("crypto");
@@ -10,6 +11,9 @@ const express = require('express');
 const app = express();
 const port = 10418;
 
+// SocketIO
+const io = require('socket.io');
+
 // Score Calculator
 const SC = require('./ScoreCalculator.js')
 
@@ -17,6 +21,13 @@ const SC = require('./ScoreCalculator.js')
 const TeamConfigFilename = './configs/team_configs.json'
 const DatabaseFilename = './configs/database.json'
 const GameRuleFilename = './configs/game.json'
+
+server = http.createServer(app)
+server.listen(port, ()=>{
+    console.log (`Express listening on port:${port} `);
+})
+
+sock_io = io(server);
 
 /*
  * Helper functions for json file reading and saving
@@ -63,8 +74,34 @@ var gameStatus = "preparing";
 PassiveFlagHandler = new SC.PassiveFlagDescriptor(team_configs, game_rules, false);
 KingOfHillHandler = new SC.KingOfHillDescriptor(team_configs, game_rules);
 
-app.disable('etag');
+// app.disable('etag');
 app.use(express.static(__dirname + '/public'));
+
+sock_io.on('connection', ()=>{
+    console.log("Get new client page open")
+    sock_io.emit('game_status', gameStatus);
+    sock_io.emit('scores', scores);
+})
+
+/* Handling scores data updating
+ */
+function scores_emit(msg, score, info){
+    if ( typeof(info) !== 'undefined')
+        sock_io.emit('scores', score);
+        
+    if (msg == "ok"){
+        scores = score;
+        sock_io.emit('dynamic', info);
+    }
+    else if (msg == "InvailidRequest"){
+
+    }
+    else if (msg == "KeyError"){
+        sock_io.emit('dynamic', info);
+    }
+    else if (info == null){
+    }
+}
 
 /* Handling request from flag listener
  */
@@ -72,26 +109,33 @@ app.get("/flag", (req, res)=>{
     if (gameStatus === "started"){
         switch (req.query.type){
             case "PassiveFlag":
-                scores = PassiveFlagHandler.calc_score(req, scores, msg=>res.send(msg))
+                PassiveFlagHandler.calc_score(req, scores, (msg, score, atk)=>{
+                    scores_emit(msg, score, atk);
+                    res.send(msg);
+                })
+                console.log(scores)
                 break;
             case "KingOfHill":
-                scores = KingOfHillHandler.calc_score(req, scores, (msg)=>{
+                KingOfHillHandler.calc_score(req, scores, (msg, score, atk)=>{
+                    scores_emit(msg, score, atk);
                     res.send(msg);
                 })
                 break;
         }
     }
     console.log(scores)
+    save_to_json(scores, DatabaseFilename);
 })
 
 /* Handling request for score data and game status
  */
+/*
 app.get("/score", (req, res)=>{
     res.json({
         "status": gameStatus,
         "scores": scores
     });
-})
+})*/
 
 /* Handling the request for team configuration
  */
@@ -117,9 +161,9 @@ app.get("/game_status", (req, res)=>{
         // Set game status
         gameStatus = req.query.set;
         if (req.query.set === "started"){
-            saveInterval = setInterval(()=>{
+            /*saveInterval = setInterval(()=>{
                 save_to_json(scores, DatabaseFilename);
-            }, 1000);
+            }, 1000);*/
             res.send('ok');
         }
         else if (req.query.set === "ended"){
@@ -133,8 +177,14 @@ app.get("/game_status", (req, res)=>{
         }
         else
             res.send('Bad request for game status setting!');
+        // Update game status
+        console.log(`Game status change to: ${gameStatus}`);
+        sock_io.emit('game_status', gameStatus);
+        sock_io.emit('scores', scores);
     }
 })
 
-console.log (`listening port:${port} `);
-app.listen(port);
+//console.log (`listening on port:${port} `);
+//app.listen(port);
+
+
