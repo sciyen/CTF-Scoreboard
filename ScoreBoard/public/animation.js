@@ -1,31 +1,74 @@
+function addRandomNoise(pos, range){
+	pos.x += (Math.random()-0.5)*range;
+	pos.y += (Math.random()-0.5)*range;
+	return pos;
+}
+
 visual = {
-    hexagon: function(mx, my, h, w, n, timeScale, target){
+    hexagon: function(mx, my, h, w, n, r, d, timeScale, target){
         var rotation = 0;
         for (var k=0; k<n; k++){
             target.append("svg:circle")
                 .attr("transform", "rotate("+rotation+","+mx+","+my+")")
                 .attr("cx", mx)
                 .attr("cy", my)
-                .attr("r", 10)
+                .attr("r", r)
                 .style("stroke", colors())
                 .style("stroke",colors(++ci)).style("fill", colors(++ci)).style("stroke-opacity",0.6).style("fill-opacity",0.4)
-                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",mx + 200).attr("cy", my + 200)
-                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",mx - 200)
-                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",mx - 200).attr("cy", my - 200)
-                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cy",my - 200).attr("cx", mx + 200)
-                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",mx + 200).attr("cy", my + 200)
-                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",my+200).attr("cy", my - 200)
+                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",mx + d).attr("cy", my + d)
+                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",mx - d)
+                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",mx - d).attr("cy", my - d)
+                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cy",my - d).attr("cx", mx + d)
+                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",mx + d).attr("cy", my + d)
+                .transition().duration(timeScale*500).ease(Math.sqrt).attr("cx",my + d).attr("cy", my - d)
                 .style("stroke-opacity",1e-6).style("fill-opacity", 1e-6).remove();
             rotation+=(360/n);
         }
+    },
+    balls: function (pos1, pos2, r, n, timeScale, target){
+        for( var k=0; k<n; k++){
+            setTimeout(()=>{
+                target.append("svg:circle")
+                    .attr("cx", pos1.x).attr("cy", pos1.y)
+                    .attr("r", r)
+                    .style("fill", colors2(++ci)).style("fill-opacity", 0.8)
+                    .transition().duration(timeScale*200).ease(Math.sqrt).attr("cx", pos2.x).attr("cy", pos2.y)
+                    .transition().duration(timeScale*200).ease(Math.sqrt).attr("r", 100).style("fill-opacity", 1e-6).remove();
+            }, k*200)
+        }
+    },
+    //                       radius, number, distribution
+    meteor: function (pos1, pos2, r, n, d, time, target){
+        pos1 = addRandomNoise(pos1, 100);
+        pos2 = addRandomNoise(pos2, 100);
+        var xScale = d3.scaleLinear()
+            .range([pos1.x, pos2.x]).domain([0, n])
+        var yScale = d3.scalePow().exponent(Math.random()+0.5)
+            .range([pos1.y, pos2.y]).domain([0, n])
+
+        for (var k=0; k<n; k++){
+            const mx = xScale(k);
+            const my = yScale(k);
+            target.append("svg:circle")
+                .attr("fill-opacity", 0)
+                .transition().delay(k * time / n)
+                .attr("cx", mx).attr("cy", my)
+                .attr("r", r)
+                .style("fill", colors2(ci2)).style("fill-opacity", 0.8)
+                .transition().duration(500).ease(d3.easePolyOut)
+                    .attr("cx", mx+(Math.random()-0.5)*d)
+                    .attr("cy", my+(Math.random()-0.5)*d)
+                    .style("fill-opacity", 1e-6).remove()
+        }
+        ci2++;
     }
 }
 
 animation_waiting = {
     waitGameAnimate: null,
-    entry: ()=>{
+    entry: function (){
         this.waitGameAnimate = setInterval(()=>{
-            visual['hexagon'](0.5*winWidth, 0.5*winHeight, winWidth, winHeight, 6, 1, waiting_svg);
+            visual['hexagon'](0.5*winWidth, 0.5*winHeight, winWidth, winHeight, 6, 10, 200, 1, waiting_svg);
         }, 2000)
 
         $('#waiting-svg').removeClass('hide')
@@ -59,7 +102,7 @@ animation_waiting = {
         // Clear wait game animation
         clearInterval(waitGameAnimate);
         waiting_svg.selectAll(".waitGame")
-            .transition().duration(500).ease("exp")
+            .transition().duration(500).ease(Math.sqrt)
             .attr("y", -100)
             .attr("cy", -100)
             .style("fill-opacity", 1e-6).remove()
@@ -72,15 +115,44 @@ animation_waiting = {
     }
 }
 
+animation_attacking = {
+    explosion: function(target, pos1, pos2){
+        visual['hexagon'](pos1.x, pos1.y, 10, 10, 6, 10, 100, 0.5, target);
+        visual['balls'](pos1, pos2, 10, 6, 1, target);
+    },
+    meteor: function(target, pos1, pos2){
+        visual['meteor'](pos1, pos2, 5, 100, 200, 200, target);
+    }
+}
+
 animation_team_config = {
-    entry: (teamConfig)=>{
-        var rootNode = d3.hierarchy(teamConfig)
+    rootNode: null,
+    update: function (teamConfig){
+        packLayout = d3.pack()
+            .size([winWidth * 0.8, 
+                   getDivHeight('body')-getDivHeight('#navTab')])
+            .padding(d=>{return d.data.name=="parent"?100:10})
+        rootNode = d3.hierarchy(teamConfig)
         console.log(rootNode)
         rootNode.sum(d=>{return d.rad?d.rad:1})
-        console.log("update")
 
         packLayout(rootNode);
-        var g = svg.selectAll("g_team_config")
+        this.entry()
+    },
+    findTeam: (teamName)=>{
+        position = null;
+        rootNode.children.forEach((node)=>{
+            if (node.data.name == teamName){
+                position = {
+                    'x': node.x,
+                    'y': node.y
+                }
+            }
+        })
+        return position;
+    },
+    entry: function (){
+        var g = svg.selectAll("#g_team_config")
             .data(rootNode.descendants())
         nodes = g.enter()
             .append('g')
@@ -88,7 +160,7 @@ animation_team_config = {
             .attr('transform', d=>{return `translate(${[d.x, d.y]})`})
         nodes.append('circle')
             .attr('r', (d)=>{return d.r;})
-            .style('fill', (d)=>d.children?"#558899":"#443322")
+            .style('fill', (d)=>d.data.color)
             .attr('fill-opacity', d=>d.data.name=="parent"?0:0.25)
         nodes.append('text')
             .text(d=>{return d.data.name=="parent"?"":d.data.name})
@@ -100,7 +172,7 @@ animation_team_config = {
             .attr('dy', d=>{return d.children?-50:0})
     },
     exit: ()=>{
-        svg.selectAll("g_team_config")
+        svg.selectAll("#g_team_config")
             .remove()
     }
 }
@@ -114,7 +186,7 @@ animation_score_table = {
      *      ]
      */
 
-    update: (scoreTableDiv, data)=>{
+    update: function (scoreTableDiv, data){
         scoreDiv = scoreTableDiv.selectAll("div").data(data)
 
         const scoreDivEnter = scoreDiv.enter()

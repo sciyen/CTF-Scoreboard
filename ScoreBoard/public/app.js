@@ -20,35 +20,100 @@ svg.append("rect")
 var scoreTableDiv = d3.select('#RealTimeScoreContainer')
     .append('div').attr('id', 'tableContainer')
 
-var colors = d3.scale.category20b();
+//var colors = d3.scale.category20b();
+var colors = d3.scaleOrdinal(d3.schemeCategory20b);
+var colors2 = d3.scaleOrdinal(d3.schemeSet3);
 var gameStatus = null;
 var teamConfig = null;
 var ci = 0;
+var ci2 = 0;
 var debug = true;
 var winWidth = window.innerWidth, winHeight = window.innerHeight;
 function log(msg) {if (debug) {console.log(msg);}}
 
+var sock_io = io.connect();
+
+sock_io.on('game_status', (data)=>{
+    if (gameStatus !== data && data === "preparing"){
+        gameStatus = data;
+        console.log(data);
+        animation_waiting.entry();
+    }
+    else if(data === "started"){
+        if (gameStatus !== "started"){
+            gameStatus = data;
+            // First call for entering started status
+            // Clear wait game animation
+            animation_waiting.exit();
+            animation_team_config.update(teamConfig)
+        }
+    }
+})
+
+sock_io.on('dynamic', (data)=>{
+    console.log(data)
+    req_pos = animation_team_config.findTeam(data.requesting);
+    atk_pos = animation_team_config.findTeam(data.attacked);
+    if (data.label === "PassiveFlag")
+        animation_attacking.meteor(svg, req_pos, atk_pos);
+    else if (data.label === "KingOfHill")
+        animation_attacking.explosion(svg, req_pos, atk_pos);
+})
+
+sock_io.on('scores', function (data){
+    // Updating data
+    team_scores = []
+    for( var team in data ){
+        scores = []
+        for( var rule in data[team] ){
+            scores.push({
+                "Name": rule,
+                "Value": data[team][rule]
+            })
+        }
+        team_scores.push({
+            "TeamName": team, 
+            "Scores": scores
+        })
+    }
+    console.log(team_scores);
+    // Show competition
+    animation_score_table.update(scoreTableDiv, team_scores)
+})
+
 var teamConfig = null;
-$(document).ready(()=>{
+$(document).ready(function (){
     $.get("/configuration", (teams)=>{
         teamConfig = {
             'name': 'parent',
-            'children': []
+            'children': [],
+            'color': "74E616"
         };
         for (var team in teams.Teams){
             ips = []
             teams.Teams[team]["IP"].forEach((ip)=>{
                 ips.push({
                     'name':ip,
-                    'rad': d3.randomUniform(0.5, 1.5)()
+                    'rad': Math.random() + 1,
+                    'color': "F05454"
                 });
             })
             teamConfig['children'].push({
                 'name': team,
-                'score': 0,
-                'children': ips
+                'children': ips,
+                'color': "E8E8E8"
             });
         }
+        for (var castle in teams.VuluVMs){
+            teamConfig['children'].push({
+                'name': castle,
+                'rad': Math.random() + 1,
+                'color': "4E58E4"
+            });
+        }
+    })
+    sock_io.emit('connection', (data)=>{
+
     })
 })
 
@@ -64,6 +129,7 @@ function getDivHeight(div){
     return Math.round(Number(height))
 }
 
+/*
 function getScoreInfo(){
     $.get("/score", (data)=>{
         if (gameStatus !== data['status'] && data['status'] === "preparing"){
@@ -113,10 +179,12 @@ function getScoreInfo(){
 setInterval(()=>{
     getScoreInfo();
 }, 1000);
+*/
 
 $(window).resize(()=>{
     winWidth = window.innerWidth;
     winHeight = window.innerHeight;
+    animation_team_config.update(teamConfig);
     console.log("resize")
 })
 
