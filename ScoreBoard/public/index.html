@@ -13,6 +13,7 @@
         <title>Scoreboard</title>
     </head>
     <body>
+        <div class="wrapper">
         <ul class="nav justify-content-center nav-tabs" id="navTab" role="tablist">
             <a class="navbar-brand">
                 <i class="fas fa-meteor"></i>
@@ -33,6 +34,52 @@
 
         <div class="tab-content extend-height" id="scoreboardTabContent">
             <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                <div class="info_container">
+                    <h1>Game Rules</h1>
+                    <div class="rule-container">
+                        <h3>Rule 1: </h3>
+                        <h3>Passive Flag</h3>
+                        <p>The red team hack into the blue team's server, and make a occupation, then get the points.</p>
+                        <ul>
+                            <li><p>Occupation: Send the following request to the Flag Listener Server
+                                <a>http://flag_listener/PassiveFlag/flag=HackBy{TeamName}</a>
+                                </p>
+                            </li>
+                            <li><p>Reward: 10 points / success requests</p></li>
+                        </ul>
+                    </div>
+
+                    <div class="rule-container">
+                        <h3>Rule 2: </h3>
+                        <h3>King Of Hill</h3>
+                        <p>Each team has been asked to attack the castle servers. After sending continunous 10 times RequestForKey request, the server will return back the key.</p>
+                        <ul>
+                            <ol>
+                                <li>
+                                    <p>Send the following request within 1 second interval, once a team successfully get a new key, the old key will expire.
+                                    <a>http://flag_listener/KingOfHill/key=RequestForKeyBy{TeamName}</a>
+                                    </p>
+                                </li>
+                                <li>
+                                    <p>Send the key to FlagListener server, then a team can get the point
+                                    <a>http://flag_listener/KingOfHill/key={your_key}</a>
+                                    </p>
+                                </li>
+                            </ol>
+                            <li><p>Reward: 10 points / currect key request.</p></li>
+                            <li><p>Note: the key is a 20 digits combination of numbers and alphabeta.</p></li>
+                        </ul>
+                        <ul>
+                            <li><p>Occupation: Send the following request to the Flag Listener Server
+                                <a>http://flag_listener/PassiveFlag/flag=HackBy{TeamName}</a>
+                                </p>
+                            </li>
+                            <li><p>Reward: 10 points / success requests</p></li>
+                        </ul>
+                    </div>
+                </div>
+
+
                 <span class="card mx-auto py-2 px-5" id="gameStatusChangeCard">
                     <h5 class="card-title mx-auto my-4">Game Status Control</h5>
                     <form id="game_status_submit" action="/game_status" method="get">
@@ -82,13 +129,15 @@
 
             <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
                 <div class="info_container">
-                    <a> This is a project about a simple passive flag listener and a scoreboard for a competition. </a>
+                    <p> This is a project about a simple passive flag listener and a scoreboard for a competition. </p>
                 </div>
             </div>
 
             <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
                 <div class="info_container">
-                    <a> Bug Report: a885566885566@gmail.com</a>
+                    <p> Author: Yencheng Chu</p>
+                    <p> Github: https://github.com/sciyen/CTF-Scoreboard</p>
+                    <p> Bugs Report: a885566885566@gmail.com</p>
                 </div>
             </div>
         </div>
@@ -96,22 +145,23 @@
 
         <footer>
             <div class="footer">
-                <p> © 2020 Yencheng </p>
+                <p> NCKU ES © 2020 Yencheng Chu </p>
             </div>
         </footer>
+        </div>
         <!--script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script-->
         <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
         <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
         <script src="https://d3js.org/d3-hierarchy.v2.min.js"></script>
         <!--script src="https://d3js.org/d3-random.v2.min.js"></script-->
-		<script src="https://d3js.org/d3-array.v2.min.js"></script>
-		<script src="https://d3js.org/d3-color.v2.min.js"></script>
-		<script src="https://d3js.org/d3-format.v2.min.js"></script>
-		<script src="https://d3js.org/d3-interpolate.v2.min.js"></script>
-		<script src="https://d3js.org/d3-time.v2.min.js"></script>
-		<script src="https://d3js.org/d3-time-format.v3.min.js"></script>
-		<script src="https://d3js.org/d3-scale.v3.min.js"></script>
+        <script src="https://d3js.org/d3-array.v2.min.js"></script>
+        <script src="https://d3js.org/d3-color.v2.min.js"></script>
+        <script src="https://d3js.org/d3-format.v2.min.js"></script>
+        <script src="https://d3js.org/d3-interpolate.v2.min.js"></script>
+        <script src="https://d3js.org/d3-time.v2.min.js"></script>
+        <script src="https://d3js.org/d3-time-format.v3.min.js"></script>
+        <script src="https://d3js.org/d3-scale.v3.min.js"></script>
 
         <script src="https://d3js.org/d3-scale-chromatic.v2.min.js"></script>
 
