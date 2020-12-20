@@ -11,9 +11,10 @@ function score_init(team_configs, rules){
 }
 
 class RuleDescriptor{
-    constructor(label, rules){
+    constructor(label, rules, logger){
         this.label = label;
         this.rule = rules[this.label];
+        this.logger = logger;
     }
 
     /* Generate the relation table between requesting ip address
@@ -27,7 +28,8 @@ class RuleDescriptor{
                     // TODO: repeated ip
                     ip_table[ip] = team
                 else
-                    console.log(`Conflict IP ${ip} between ${ip_table[ip]} and ${team}`)
+                    this.logger.error(`[${this.label}] IP table generating error, 
+                        Conflict IP ${ip} between ${ip_table[ip]} and ${team}`)
             })
         }
         return ip_table;
@@ -56,13 +58,13 @@ class RuleDescriptor{
         this.rule.Query.forEach((key)=>{
             const query = req.query[key];
             if (typeof query === "undefined"){
-                console.log("Missing game rule attribute");
+                this.logger.warn(`[${this.label}] Missing game rule attribute.`, {'query': req.query})
                 return false;
             }
         })
         if (typeof req.query.ip === "undefined" ||
             typeof req.query.time === "undefined"){
-            console.log("Missing ip or time attribute");
+            this.logger.warn(`[${this.label}] Missing IP or time attribute.`, {'query': req.query})
             return false;
         }
         return true;
@@ -93,8 +95,8 @@ class RuleDescriptor{
  *         a passive flag, call this func to calculate scores.
  ***************************************************************/
 class PassiveFlagDescriptor extends RuleDescriptor{
-    constructor(team_configs, rules, allowRepeatedIp=false){
-        super("PassiveFlag", rules);
+    constructor(team_configs, rules, allowRepeatedIp=false, logger){
+        super("PassiveFlag", rules, logger);
         // Only support single flag now
         this.key_flag = this.rule.Flag;
         this.ip_tables = super.generate_ip_table(team_configs, allowRepeatedIp);
@@ -107,7 +109,7 @@ class PassiveFlagDescriptor extends RuleDescriptor{
             return false;
         if (typeof this.ip_tables[ip] === "undefined" ||
             typeof this.hash_table[flag] === "undefined"){
-            console.log("Lookup failed");
+            this.logger.warn(`[${this.label}] Lookup failed.`, {'query': req.query})
             return false;
         }
         return true;
@@ -124,8 +126,7 @@ class PassiveFlagDescriptor extends RuleDescriptor{
         var msg = "";
         if(!this.check_valid_input(req, flag)){
             // Valid input
-            console.log("Invalid req for passive flag:");
-            console.log(req.query)
+            this.logger.warn(`[${this.label}] Invalid request.`, {'query': req.query})
             msg = "InvalidRequest";
         }
         else{
@@ -135,6 +136,7 @@ class PassiveFlagDescriptor extends RuleDescriptor{
             scores[att_team][this.label] -= this.rule.Punish;
             msg = "ok";
             attack_info = super.pack_attacking_info(req_team, att_team);
+            this.logger.info(`[${this.label}] Attack succeed.`, {'attack': attack_info})
         }
         callback(msg, scores, attack_info);
     }
@@ -142,8 +144,8 @@ class PassiveFlagDescriptor extends RuleDescriptor{
 }
 
 class KingOfHillDescriptor extends RuleDescriptor{
-    constructor(team_configs, rules){
-        super("KingOfHill", rules);
+    constructor(team_configs, rules, logger){
+        super("KingOfHill", rules, logger);
         this.key_flag = this.rule.KeyRequestFlag;
         this.generate_domainent(team_configs)
         this.hash_table = super.generate_hash_table(team_configs);
@@ -153,7 +155,7 @@ class KingOfHillDescriptor extends RuleDescriptor{
         const ip = req.query.ip;
         if (!super.check_valid_input(req) ||
             typeof this.ip_tables[ip] === "undefined"){
-            console.log("Lookup failed");
+            this.logger.warn(`[${this.label}] Lookup failed.`, {'query': req.query})
             return false;
         }
         return true;
@@ -200,8 +202,7 @@ class KingOfHillDescriptor extends RuleDescriptor{
         var msg = "";
         if(!this.check_valid_input(req, flag)){
             // Valid input
-            console.log("Invalid req for King of Hill, do you forget to add castle ip?");
-            console.log(req.query)
+            this.logger.warn(`[${this.label}] Invalid request.`, {'query': req.query})
             msg = "InvalidRequest"
         }
         else{
@@ -214,6 +215,7 @@ class KingOfHillDescriptor extends RuleDescriptor{
                 else{
                     scores[req.query.team][this.label] += this.rule.Reward;
                     console.log(`${this.label} attack succeed`);
+                    this.logger.info(`[${this.label}] ${req.query.team} Succeed to occupy the castle ${att_team}.`)
                     msg = "ok";
                 }
             }
@@ -225,18 +227,19 @@ class KingOfHillDescriptor extends RuleDescriptor{
                     //this.key = Math.random().toString(36).substring(20);
                     this.key = crypto.randomBytes(20).toString('hex');
                     msg = this.key;
-                    console.log(`${req_team} get key ${this.key}`)
+                    this.logger.info(`[${this.label}] ${req_team} Succeed to get the key of castle ${att_team}.`)
                 }
                 else{
                     msg = req_times.toString();
                 }
-                console.log(`Key request from ${ip}, ${req_team} to ${att_team}`)
+                this.logger.info(`[${this.label}] ${req_team} requests the key of castle ${att_team}.`)
             }
             else{
                 console.log("key error");
                 msg = "keyError"
             }
             attack_info = super.pack_attacking_info(req.query.team, att_team);
+            this.logger.info(`[${this.label}] Attack succeed.`, {'attack': attack_info})
         }
         callback(msg, scores, attack_info);
     }
