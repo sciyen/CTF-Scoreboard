@@ -1,0 +1,33 @@
+.box{
+    background-color: rgba(0, 0, 0, 0.2);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+}
+
+.box label, .box legend{
+    color: #AAAAAA;
+}
+
+.box h5{
+    color: #EEEEEE;
+}
+
+.config{
+    background-color: rgba(50, 50, 50, 0.3);
+}
+
+td, th{
+    text-align: center;
+}
+.format-sample table, .format-sample td, .format-sample th{
+    border: 1px solid white;
+    border-collapse: collapse;
+}
+.format-sample table{
+    margin: 10px 0 10px 0;
+}
+.format-sample th, td{
+    padding: 0 10px 0 10px;
+}

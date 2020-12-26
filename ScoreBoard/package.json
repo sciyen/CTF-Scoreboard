@@ -8,7 +8,9 @@
     "d3-ease": "^2.0.0",
     "d3-scale": "^3.2.3",
     "express": "^4.17.1",
+    "express-session": "^1.17.1",
     "fs": "^0.0.1-security",
+    "js-md5": "^0.7.3",
     "socket.io": "^3.0.3",
     "winston": "^3.3.3"
   }

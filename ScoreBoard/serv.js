@@ -26,27 +26,32 @@ const express = require('express');
 const app = express();
 const port = 10418;
 
+/* session */
+const session = require('express-session');
+
 // SocketIO
 const io = require('socket.io');
 
 // Score Calculator
 const SC = require('./ScoreCalculator.js')
 
+/*********************************************************/
+/*                 Configuration File                    */
+/*********************************************************/
 /* Read data from file */
 const TeamConfigFilename = './configs/team_configs.json'
 const DatabaseFilename = './configs/database.json'
 const GameRuleFilename = './configs/game.json'
+const KeysFilename = './configs/keys.json'
 
-server = http.createServer(app)
-server.listen(port, ()=>{
-    console.log (`Express listening on port:${port} `);
-})
+/*********************************************************/
+/*                 Global varialbe setup                 */
+/*********************************************************/
+const game_rules = load_from_json(GameRuleFilename);
+var team_configs = load_from_json(TeamConfigFilename);
+var keys_configs = load_from_json(KeysFilename);
 
-sock_io = io(server);
-
-/*
- * Helper functions for json file reading and saving
- */
+/* Helper functions for json file reading and saving */
 function load_from_json(filename){
     var file = fs.readFileSync(filename);
     var json_obj = JSON.parse(file)
@@ -60,9 +65,51 @@ function save_to_json(content, filename){
     })
 }
 
+function getInputValue(value){
+    if( value === undefined ||
+        value == null ||
+        value.length <= 0 ||
+        value.indexOf('\"') >= 0 ||
+        value.indexOf('\'') >= 0 ||
+        value.indexOf('<') >= 0 ||
+        value.indexOf('>') >= 0 ||
+        value.indexOf('(') >= 0 ||
+        value.indexOf(')') >= 0 ||
+        value.indexOf(' ') >= 0 ||
+        value.indexOf(',') >= 0){
+        return false
+    }
+    return value
+}
+
+function checkAccount(uname, pswd){
+    if( getInputValue(uname) !== false &&
+        keys_configs.account[uname] !== undefined && 
+        getInputValue(pswd) !== false &&
+        keys_configs.account[uname] === pswd)
+        return true
+    else
+        return false
+}
+
+/*********************************************************/
+/*                      Server setup                     */
+/*********************************************************/
 logger.info("System startup, reading database.");
-const game_rules = load_from_json(GameRuleFilename)
-const team_configs = load_from_json(TeamConfigFilename)
+
+server = http.createServer(app)
+server.listen(port, ()=>{
+    console.log (`Express listening on port:${port} `);
+})
+
+// socket.io 
+sock_io = io(server);
+
+// express-session
+app.use(session({
+    secret: keys_configs.session_key, 
+    cookie: { "sid": 0 }
+}));
 
 var scores = null;
 /* If old scores data not exist, create a new one */
@@ -89,6 +136,13 @@ KingOfHillHandler = new SC.KingOfHillDescriptor(team_configs, game_rules, logger
 
 // app.disable('etag');
 app.use(express.static(__dirname + '/public'));
+app.use(function(req, res, next){
+    if (req.session.uname == null && req.path.indexOf('/admin') >= 0){
+        res.redirect('/index.html');
+    }
+    next();
+})
+app.use('/admin', express.static(__dirname + '/private'));
 
 sock_io.on('connection', (sock)=>{
     var address = sock.handshake.address;
@@ -141,6 +195,11 @@ app.get("/flag", function(req, res){
     save_to_json(scores, DatabaseFilename);
 })
 
+app.get("/admin/change_team_config", function (req, res){
+    console.log(req.query)
+    team_configs = req.query;
+    res.send("ok")
+})
 /* Handling request for score data and game status
  */
 /*
@@ -157,6 +216,34 @@ app.get("/configuration", (req, res)=>{
     res.json(team_configs);
 })
 
+app.get("/login", (req, res)=>{
+    const uname = req.query.uname;
+    const pswd = req.query.pswd;
+    if (checkAccount(uname, pswd)){
+        req.session.uname = uname;
+        res.send({'Status':'Succeed'});
+        logger.info(`[Login] Succeed to login, username: ${uname}`);
+    }
+    else{
+        logger.warn(`[Login] Invalid user try to login with username: ${uname} pswd: ${pswd}`);
+        res.send({'Status':'Failed'});
+    }
+})
+
+app.get("/logout", (req, res)=>{
+    req.session.destroy((err)=>{
+        console.log(err)
+    })
+    res.send('ok')
+})
+
+/*
+app.get("/admin", (req, res)=>{
+    var hid = req.query.hid;
+    const sid = req.session.uname;
+    res.send("ok")
+})*/
+
 /* Perform the game status change and response to the client
  */
 function changeStatus(req_status, res){
@@ -170,14 +257,9 @@ function changeStatus(req_status, res){
  *      Preparing, Started, ended
  */
 var saveInterval = null
-app.get("/game_status", function (req, res){
+app.get("/admin/change_game_status", function (req, res){
     const req_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    if (typeof req.query.token === "undefined" || 
-        req.query.token !== "pswd"){
-        res.send('Authorization Failed');
-        logger.warn(`[Management Error] Authorization Failed, wrong password, from ${req_ip}`);
-    }
-    else if(req.query.set === gameStatus){
+    if(req.query.set === gameStatus){
         // Repeated request, ignore it
         res.send('Repeated request');
         logger.warn(`[Management Error] Repeated request`);
