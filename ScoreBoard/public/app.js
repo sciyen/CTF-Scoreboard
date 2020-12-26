@@ -115,6 +115,29 @@ $(document).ready(function (){
     sock_io.emit('connection', (data)=>{
 
     })
+
+    $("#btn-login").click(function (err){
+        $("#login-block").removeClass("hide")
+            .addClass("cover")
+    })
+    $("#btn-close").click(function (err){
+        $("#login-block").removeClass("cover")
+            .addClass("hide")
+    })
+
+    $("#login-form").submit(function(event){
+        event.preventDefault();
+        message = {
+            "uname": $("#input-username").val(),
+            "pswd": md5($("#input-pswd").val())
+        }
+        $.get("/login", message).done((data)=>{
+            if (data.Status === "Succeed")
+                $(location).prop('href', "/admin/admin.html")
+            else
+                alert("Wrong password or User not recongized!")
+        })
+    })
 })
 
 var waitGameAnimate = null;

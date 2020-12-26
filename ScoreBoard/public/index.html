@@ -30,6 +30,9 @@
             <li class="nav-item">
                 <a class="nav-link" id="contact-tab" data-toggle="tab" aria-controls="contact" aria-selected="false" href="#contact">Contact</a>
             </li>
+            <a class="nav-item nav-link" id="btn-login">
+                Login
+            </a>
         </ul>
 
         <div class="tab-content extend-height" id="scoreboardTabContent">
@@ -141,7 +144,29 @@
                 </div>
             </div>
         </div>
-
+        <div class="hide login-container extend-height" id="login-block">
+            <div class="info_container">
+            <span class="card mx-auto align-middle px-4">
+                <span id="btn-close">X</span>
+                <h5 class="card-title mx-auto my-4">Login</h5>
+                <form id="login-form" action="login" method="get">
+                    <div class="form-group row">
+                        <label for="username" class="col-sm-3 col-form-label">Username</label>
+                        <div class="col-sm-9">
+                            <input type="text" name="username" class="form-control" id="input-username">
+                        </div>
+                        <label for="passwd" class="col-sm-3 col-form-label">Password</label>
+                        <div class="col-sm-9">
+                            <input type="password" name="passwd" class="form-control" id="input-pswd">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <button type="submit" class="btn btn-primary my-2 mx-auto">Login</button>
+                    </div>
+                </form>
+            </span>
+            </div>
+        </div>
 
         <footer>
             <div class="footer">
@@ -166,6 +191,7 @@
         <script src="https://d3js.org/d3-scale-chromatic.v2.min.js"></script>
 
         <script src="/socket.io/socket.io.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.18.0/js/md5.js" integrity="sha512-NpfrQEgzOExS1Ax8fjITKrgBFK87lZbBmvWdZk4suiCC4tsHPrTCsulgIA7Z/+CeWhDpEP/f36mNWgZXDKtTAA==" crossorigin="anonymous"></script>
         <script type="text/javascript" src="animation.js"></script>
         <script type="text/javascript" src="app.js"></script>
     </body>

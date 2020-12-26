@@ -35,7 +35,7 @@ ul, li{
     display: inline-block;
 }*/
 #gameStatusChangeCard{
-    background-color: #E8E8E8;
+    //background-color: #E8E8E8;
     width: 60%;
     min-width: 500px;
     margin-bottom: 50px;
@@ -67,7 +67,7 @@ footer{
     width: 100%;
     border-style: solid;
     border-width: 1px 0 0 0;
-    border-color: #E8E8E8E8;
+    border-color: #E8E8E8;
 }
 
 .info_container{
@@ -76,6 +76,8 @@ footer{
     margin-top: 5em;
     margin-left:auto;
     margin-right:auto;
+    padding-top: 30px;
+    padding-bottom: 30px;
 }
 /*.info_container a{
     color: #E8E8E8 !important;
@@ -98,7 +100,9 @@ th, tr{
 }
 
 .card{
-    margin-top: 20px;
+    //max-width: 500px;
+    min-width: 300px;
+    vertical-align: middle;
 }
 
 .card-body{
@@ -120,13 +124,30 @@ h5{
     max-width: 1920px !important;
 }
 
+.login-container{
+    background-color: rgba(12, 34, 34, 0.9);
+    width:100%;
+    margin-top: 0;
+}
+
 .hide{
     display:none;
 }
 
 .cover{
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 2rem;
     z-index: 2;
+}
+
+#btn-close{
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 30px;
+    width: 30px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: center;
 }
