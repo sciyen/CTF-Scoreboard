@@ -2,9 +2,20 @@ import http.server
 import urllib.parse as urlparse
 import requests
 import time
+import json
 
 SCOREBOARD_SERVER = r"http://nckuvincent.ddns.net"
 SCOREBOARD_PORT = "10418"
+
+TEAM_CONFIG_FILE = "../ScoreBoard/configs/game.json"
+
+f = open(TEAM_CONFIG_FILE, 'r')
+rules = json.loads(f.read())
+query_table = {}
+for rule in rules:
+    query_table['/'+rule] = rules[rule]['Query']
+
+print(query_table)
 
 PORT = 11234
 CONTAIN_PORT_INFO = False
@@ -14,7 +25,7 @@ class GetHandler(http.server.BaseHTTPRequestHandler):
         status_code = 200
         r = None
         parsed_path = urlparse.urlparse(self.path)
-        if ( parsed_path.path == "/flag" ):
+        if ( parsed_path.path in query_table ):
             query = parsed_path.query
             if ( query != "" ):
                 query_d = dict(qc.split("=") for qc in query.split("&"))
@@ -24,7 +35,9 @@ class GetHandler(http.server.BaseHTTPRequestHandler):
                 else:
                     req_ip = self.client_address[0]
                 req_url = (SCOREBOARD_SERVER + ':' + SCOREBOARD_PORT + 
-                    "/flag?flag={}&ip={}&time={}".format(query_d['flag'], req_ip, time.time()))
+                        "/flag?type={}&{}&ip={}&time={}".format(
+                            parsed_path.path[1:], query, req_ip, time.time()))
+                print(req_url)
                 r = requests.get(req_url)
                 print(r.status_code)
                 if (r.status_code != 200):
@@ -35,6 +48,7 @@ class GetHandler(http.server.BaseHTTPRequestHandler):
                 status_code = 400
         else:
             # 400 means bad request
+            print("No match path found")
             status_code = 400
         self.send_response(status_code)
         self.end_headers()
