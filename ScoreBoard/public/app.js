@@ -45,7 +45,6 @@ sock_io.on('game_status', function(data){
             // First call for entering started status
             // Clear wait game animation
             animation_waiting.exit();
-            animation_team_config.update(teamConfig)
         }
     }
 })
@@ -78,6 +77,7 @@ sock_io.on('scores', function(data){
     }
     console.log(team_scores);
     // Show competition
+    //animation_score_table.force_remove(scoreTableDiv)
     animation_score_table.update(scoreTableDiv, team_scores)
 })
 
@@ -109,6 +109,9 @@ sock_io.on('configuration', function(teams){
             'color': "4E58E4"
         });
     }
+    animation_score_table.force_remove(scoreTableDiv)
+    animation_team_config.force_remove()
+    animation_team_config.update(teamConfig)
 })
 
 var teamConfig = null;

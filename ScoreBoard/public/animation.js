@@ -64,14 +64,14 @@ visual = {
     }
 }
 
+waitGameAnimate: null,
 animation_waiting = {
-    waitGameAnimate: null,
     entry: function (){
-        this.waitGameAnimate = setInterval(()=>{
+        waitGameAnimate = setInterval(()=>{
             visual['hexagon'](0.5*winWidth, 0.5*winHeight, winWidth, winHeight, 6, 10, 200, 1, waiting_svg);
         }, 2000)
 
-        $('#waiting-svg').removeClass('hide')
+        $('#waiting-svg').fadeIn(2000)
         // Show waiting info
         waiting_svg
             .append("svg:circle")
@@ -108,9 +108,7 @@ animation_waiting = {
             .style("fill-opacity", 1e-6).remove()
         setTimeout(()=>{
             $('#waiting-svg')
-                .fadeOut()
-                .delay(500)
-                .addClass('hide')
+                .fadeOut(2000)
         }, 2000)
     }
 }
@@ -137,23 +135,12 @@ animation_team_config = {
         rootNode.sum(d=>{return d.rad?d.rad:1})
 
         packLayout(rootNode);
-        this.entry()
-    },
-    findTeam: (teamName)=>{
-        position = null;
-        rootNode.children.forEach((node)=>{
-            if (node.data.name == teamName){
-                position = {
-                    'x': node.x,
-                    'y': node.y
-                }
-            }
-        })
-        return position;
-    },
-    entry: function (){
-        var g = svg.selectAll("#g_team_config")
+
+        g = svg.selectAll("#g_team_config")
             .data(rootNode.descendants())
+
+        g.exit().remove()
+
         nodes = g.enter()
             .append('g')
             .attr('id', "g_team_config")
@@ -171,7 +158,19 @@ animation_team_config = {
             .attr('fill', d=>{return d.children?"#E8E8E8":"#F05454"})
             .attr('dy', d=>{return d.children?-50:0})
     },
-    exit: ()=>{
+    findTeam: (teamName)=>{
+        position = null;
+        rootNode.children.forEach((node)=>{
+            if (node.data.name == teamName){
+                position = {
+                    'x': node.x,
+                    'y': node.y
+                }
+            }
+        })
+        return position;
+    },
+    force_remove: ()=>{
         svg.selectAll("#g_team_config")
             .remove()
     }
@@ -196,10 +195,8 @@ animation_score_table = {
 
         scoreDiv.exit().remove()
 
-        scoreDivEnter.append('h5').text(d=>{d.TeamName})
+        scoreDivEnter.append('h5').text(d=>d.TeamName)
             .attr('class', 'card-title mx-auto')
-
-        scoreDivEnter.selectAll('h5').text(d => d.TeamName)
 
         const tableEnter = scoreDivEnter.append('table')
             .attr('id', d=>`score-table-${ d.TeamName }`)
@@ -225,7 +222,9 @@ animation_score_table = {
             .data(d => d3.values(d))
 
         td.enter().append('td')
-               
         td.text(d => d)
+    },
+    force_remove: function(scoreTableDiv){
+        scoreTableDiv.selectAll('div').remove()
     }
 }

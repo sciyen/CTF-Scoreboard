@@ -1,6 +1,7 @@
 var crypto = require("crypto");
-function score_init(team_configs, rules){
+function score_init(team_configs, rules, logger){
     var scores = {};
+    logger.info("[Scores Reset] Warning... scores reseting")
     for(var team in team_configs.Teams){
         scores[team] = {};
         for(var score in rules){

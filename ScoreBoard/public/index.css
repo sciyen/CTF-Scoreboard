@@ -105,6 +105,10 @@ th, tr{
     vertical-align: middle;
 }
 
+#RealTimeScoreContainer{
+    padding-top:50px;
+}
+
 .card-body{
     background-color: #443366;
 }

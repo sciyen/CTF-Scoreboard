@@ -119,7 +119,7 @@ if (fs.existsSync(DatabaseFilename)){
 }
 else{
     logger.info("Old file not found, creating new scores.");
-    scores = SC.score_init(team_configs, game_rules);
+    scores = SC.score_init(team_configs, game_rules, logger);
 }
 
 /* Start up message */
@@ -131,8 +131,8 @@ logger.info("Team configuration. ", {'teams': team_configs});
 // preparing, started, ended
 var gameStatus = "preparing";
 
-PassiveFlagHandler = new SC.PassiveFlagDescriptor(team_configs, game_rules, false, logger);
-KingOfHillHandler = new SC.KingOfHillDescriptor(team_configs, game_rules, logger);
+var PassiveFlagHandler = new SC.PassiveFlagDescriptor(team_configs, game_rules, false, logger);
+var KingOfHillHandler = new SC.KingOfHillDescriptor(team_configs, game_rules, logger);
 
 // app.disable('etag');
 app.use(express.static(__dirname + '/public'));
@@ -147,9 +147,9 @@ app.use('/admin', express.static(__dirname + '/private'));
 sock_io.on('connection', (sock)=>{
     var address = sock.handshake.address;
     logger.info(`New client page from ${address}`);
-    sock_io.emit('game_status', gameStatus);
-    sock_io.emit('scores', scores);
     sock_io.emit('configuration', team_configs);
+    sock_io.emit('scores', scores);
+    sock_io.emit('game_status', gameStatus);
 })
 
 /* Handling scores data updating
@@ -198,8 +198,24 @@ app.get("/flag", function(req, res){
 
 app.get("/admin/change_team_config", function (req, res){
     console.log(req.query)
-    team_configs = req.query;
-    res.send("ok")
+    if (gameStatus !== "started"){
+        team_configs = req.query;
+        PassiveFlagHandler = new SC.PassiveFlagDescriptor(
+            team_configs, game_rules, false, logger);
+        KingOfHillHandler = new SC.KingOfHillDescriptor(
+            team_configs, game_rules, logger);
+
+        // Reset score
+        scores = SC.score_init(team_configs, game_rules, logger);
+        sock_io.emit('configuration', team_configs);
+        sock_io.emit('scores', scores);
+        logger.error("[Team Config] Succeed! Team configuration reset");
+        res.send("ok")
+    }
+    else{
+        logger.error("[Team Config] Error! Team configuration can't be update while gaming")
+        res.send("Error! Team configuration can't be update while gaming")
+    }
 })
 
 app.get("/login", function(req, res){
@@ -266,7 +282,7 @@ app.get("/admin/change_game_status", function (req, res){
         }
         // Update game status
         sock_io.emit('game_status', gameStatus);
-        sock_io.emit('scores', scores);
+        setTimeout(()=>sock_io.emit('scores', scores), 1000)
     }
 })
 
