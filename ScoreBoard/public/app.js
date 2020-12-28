@@ -33,7 +33,7 @@ function log(msg) {if (debug) {console.log(msg);}}
 
 var sock_io = io.connect();
 
-sock_io.on('game_status', (data)=>{
+sock_io.on('game_status', function(data){
     if (gameStatus !== data && data === "preparing"){
         gameStatus = data;
         console.log(data);
@@ -50,7 +50,7 @@ sock_io.on('game_status', (data)=>{
     }
 })
 
-sock_io.on('dynamic', (data)=>{
+sock_io.on('dynamic', function(data){
     console.log(data)
     req_pos = animation_team_config.findTeam(data.requesting);
     atk_pos = animation_team_config.findTeam(data.attacked);
@@ -60,7 +60,7 @@ sock_io.on('dynamic', (data)=>{
         animation_attacking.explosion(svg, req_pos, atk_pos);
 })
 
-sock_io.on('scores', function (data){
+sock_io.on('scores', function(data){
     // Updating data
     team_scores = []
     for( var team in data ){
@@ -81,37 +81,38 @@ sock_io.on('scores', function (data){
     animation_score_table.update(scoreTableDiv, team_scores)
 })
 
+sock_io.on('configuration', function(teams){
+    teamConfig = {
+        'name': 'parent',
+        'children': [],
+        'color': "74E616"
+    };
+    for (var team in teams.Teams){
+        ips = []
+        teams.Teams[team]["IP"].forEach((ip)=>{
+            ips.push({
+                'name':ip,
+                'rad': Math.random() + 1,
+                'color': "F05454"
+            });
+        })
+        teamConfig['children'].push({
+            'name': team,
+            'children': ips,
+            'color': "E8E8E8"
+        });
+    }
+    for (var castle in teams.VuluVMs){
+        teamConfig['children'].push({
+            'name': castle,
+            'rad': Math.random() + 1,
+            'color': "4E58E4"
+        });
+    }
+})
+
 var teamConfig = null;
 $(document).ready(function (){
-    $.get("/configuration", (teams)=>{
-        teamConfig = {
-            'name': 'parent',
-            'children': [],
-            'color': "74E616"
-        };
-        for (var team in teams.Teams){
-            ips = []
-            teams.Teams[team]["IP"].forEach((ip)=>{
-                ips.push({
-                    'name':ip,
-                    'rad': Math.random() + 1,
-                    'color': "F05454"
-                });
-            })
-            teamConfig['children'].push({
-                'name': team,
-                'children': ips,
-                'color': "E8E8E8"
-            });
-        }
-        for (var castle in teams.VuluVMs){
-            teamConfig['children'].push({
-                'name': castle,
-                'rad': Math.random() + 1,
-                'color': "4E58E4"
-            });
-        }
-    })
     sock_io.emit('connection', (data)=>{
 
     })
@@ -120,6 +121,7 @@ $(document).ready(function (){
         $("#login-block").removeClass("hide")
             .addClass("cover")
     })
+
     $("#btn-close").click(function (err){
         $("#login-block").removeClass("cover")
             .addClass("hide")
@@ -152,63 +154,9 @@ function getDivHeight(div){
     return Math.round(Number(height))
 }
 
-/*
-function getScoreInfo(){
-    $.get("/score", (data)=>{
-        if (gameStatus !== data['status'] && data['status'] === "preparing"){
-            gameStatus = data['status'];
-
-            console.log(data['status']);
-            animation_waiting.entry();
-        }
-        else if(data['status'] === "started"){
-            if (gameStatus !== "started"){
-                gameStatus = "started"
-                // First call for entering started status
-                // Clear wait game animation
-                animation_waiting.exit();
-                packLayout = d3.pack()
-                    .size([winWidth * 0.8, 
-                           getDivHeight('body')-getDivHeight('#navTab')])
-                    .padding(d=>{return d.data.name=="parent"?100:10})
-                animation_team_config.entry(teamConfig)
-            }
-            //console.log(data['scores'])
-            // Updating data
-            teamConfig.children.forEach((team, idx)=>{
-                teamConfig.children[idx].score = data['scores'][team.name]['PassiveFlag'];
-            })
-            // Show competition
-            team_scores = []
-            for( var team in data['scores'] ){
-                scores = []
-                for( var rule in data['scores'][team] ){
-                    scores.push({
-                        "Name": rule,
-                        "Value": data['scores'][team][rule]
-                    })
-                }
-                team_scores.push({
-                    "TeamName": team, 
-                    "Scores": scores
-                })
-            }
-            console.log(team_scores);
-            animation_score_table.update(scoreTableDiv, team_scores)
-        }
-    })
-}
-
-setInterval(()=>{
-    getScoreInfo();
-}, 1000);
-*/
-
 $(window).resize(()=>{
     winWidth = window.innerWidth;
     winHeight = window.innerHeight;
     animation_team_config.update(teamConfig);
     console.log("resize")
 })
-
-//$("#game_status_change").submit()

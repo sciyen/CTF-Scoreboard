@@ -149,6 +149,7 @@ sock_io.on('connection', (sock)=>{
     logger.info(`New client page from ${address}`);
     sock_io.emit('game_status', gameStatus);
     sock_io.emit('scores', scores);
+    sock_io.emit('configuration', team_configs);
 })
 
 /* Handling scores data updating
@@ -200,23 +201,8 @@ app.get("/admin/change_team_config", function (req, res){
     team_configs = req.query;
     res.send("ok")
 })
-/* Handling request for score data and game status
- */
-/*
-app.get("/score", (req, res)=>{
-    res.json({
-        "status": gameStatus,
-        "scores": scores
-    });
-})*/
 
-/* Handling the request for team configuration
- */
-app.get("/configuration", (req, res)=>{
-    res.json(team_configs);
-})
-
-app.get("/login", (req, res)=>{
+app.get("/login", function(req, res){
     const uname = req.query.uname;
     const pswd = req.query.pswd;
     if (checkAccount(uname, pswd)){
@@ -230,19 +216,12 @@ app.get("/login", (req, res)=>{
     }
 })
 
-app.get("/logout", (req, res)=>{
+app.get("/logout", function(req, res){
     req.session.destroy((err)=>{
         console.log(err)
     })
     res.send('ok')
 })
-
-/*
-app.get("/admin", (req, res)=>{
-    var hid = req.query.hid;
-    const sid = req.session.uname;
-    res.send("ok")
-})*/
 
 /* Perform the game status change and response to the client
  */
@@ -290,8 +269,4 @@ app.get("/admin/change_game_status", function (req, res){
         sock_io.emit('scores', scores);
     }
 })
-
-//console.log (`listening on port:${port} `);
-//app.listen(port);
-
 
